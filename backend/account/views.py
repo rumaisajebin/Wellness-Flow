@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 from urllib import response
+from django.shortcuts import redirect
 from rest_framework import generics,status
 from rest_framework.permissions import AllowAny,IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -56,6 +57,7 @@ def verify_account(request, uidb64, token):
     if user is not None and default_token_generator.check_token(user, token):
         user.is_active = True
         user.save()
-        return HttpResponse("Your account has been successfully verified.")
+        return redirect("http://localhost:5173/")
+        # return HttpResponse("Your account has been successfully verified.")
     else:
         return HttpResponse("Invalid verification link.")

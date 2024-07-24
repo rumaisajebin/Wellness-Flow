@@ -33,22 +33,40 @@ def save_user_profile(sender, instance, **kwargs):
         instance.patient_profile.save()
         
 class DoctorProfile(models.Model):
+    
+    VERIFICATION_STATUS_CHOICES = [
+    ('pending', 'Pending Review'),
+    ('in_progress', 'In Progress'),
+    ('approved', 'Approved'),
+    ('denied', 'Denied'),
+]
+
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='doctor_profile')
+    profile_pic = models.ImageField(upload_to='profile/',null=True)
     full_name = models.CharField(max_length=100)
     phone_number = models.IntegerField(null = True)
+    address = models.TextField(null=True)
+    bio = models.TextField(null=True)
     medical_license_no = models.CharField(max_length=100)
     specialization = models.CharField(max_length=100)
     graduation_year = models.IntegerField(null = True)
     years_of_experience = models.IntegerField(null = True)
     workplace_name = models.CharField(max_length=100)
-    document = models.FileField(upload_to='documents/')
-    is_verify = models.BooleanField(default = False)
+    medical_license_certificate = models.FileField(upload_to='documents/medical_license_certificates/', null=True)
+    identification_document = models.FileField(upload_to='documents/identification_documents/', null=True)
+    certificates_degrees = models.FileField(upload_to='documents/certificates_degrees/', null=True)
+    curriculum_vitae = models.FileField(upload_to='documents/cv/', null=True)
+    proof_of_work = models.FileField(upload_to='documents/proof_of_work/', null=True)
+    specialization_certificates = models.FileField(upload_to='documents/specialization_certificates/', null=True)
+    is_verify = models.CharField(max_length=50, choices=VERIFICATION_STATUS_CHOICES, default='pending')
+    is_block = models.BooleanField(default = False)
     
     def __str__(self):
         return self.user.username
     
 class PatientProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='patient_profile')
+    profile_pic = models.ImageField(upload_to='profile/patient',default='image.jpg')
     full_name = models.CharField(max_length=100)
     date_of_birth = models.DateField(null=True)
     age = models.IntegerField(null = True)

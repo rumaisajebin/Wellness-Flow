@@ -1,24 +1,33 @@
 from django.shortcuts import get_object_or_404
-from django.urls import reverse
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from .serializers import DoctorSerializer,DoctorProfile
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.exceptions import ValidationError
 
 class DoctorProfileViewSet(viewsets.ModelViewSet):
     queryset = DoctorProfile.objects.all()
     serializer_class = DoctorSerializer
     permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser) 
 
     def get_queryset(self):
+        if self.request.user.is_staff:
+            return DoctorProfile.objects.all()
         return DoctorProfile.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
     def perform_update(self, serializer):
-        serializer.save()
+        try:
+            print(serializer)
+            serializer.save()
+        except ValidationError as e:
+            print(e.detail)  # Log validation errors
+            raise e
 
     @action(detail=False, methods=['get'], url_path='user/(?P<user_id>[^/.]+)')
     def get_by_user_id(self, request, user_id=None):
@@ -31,38 +40,3 @@ class DoctorProfileViewSet(viewsets.ModelViewSet):
         user = request.user
         profile = get_object_or_404(DoctorProfile, user=user)
         return Response({"profile_id": profile.id})
-
-
-@api_view(["PUT"])
-@permission_classes([IsAuthenticated])
-def block_profile(request, pk):
-    instance = get_object_or_404(DoctorProfile, pk=pk)
-    if not instance.is_block:
-        instance.is_block = True
-        instance.save()
-    
-    response_data = {
-        "status": 200,        
-        "title": "Successfully Blocked",
-        "message": "Doctor Profile Successfully blocked.", 
-        "redirect": "true",       
-        "redirect_url": reverse('doctor-profile-list-create')
-    }
-    return Response(response_data)
-
-@api_view(["PUT"])
-@permission_classes([IsAuthenticated])
-def verify_profile(request, pk):
-    instance = get_object_or_404(DoctorProfile, pk=pk)
-    if not instance.is_verify:
-        instance.is_verify = True
-        instance.save()
-    
-    response_data = {
-        "status": 200,        
-        "title": "Successfully Verified",
-        "message": "Doctor Profile Successfully verified.", 
-        "redirect": "true",       
-        "redirect_url": reverse('doctor-profile-list-create')
-    }
-    return Response(response_data)

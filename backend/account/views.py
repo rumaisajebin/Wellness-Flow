@@ -14,6 +14,7 @@ from django.contrib.auth.tokens import default_token_generator
 
 class Token(TokenObtainPairView):
     serializer_class = TokenSerializer
+    
 
 class SignupView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
@@ -55,9 +56,9 @@ def verify_account(request, uidb64, token):
         user = None
 
     if user is not None and default_token_generator.check_token(user, token):
-        user.is_active = True
+        user.is_verify = True
         user.save()
-        return redirect("http://localhost:5173/")
+        return redirect("http://localhost:5173/signin")
         # return HttpResponse("Your account has been successfully verified.")
     else:
         return HttpResponse("Invalid verification link.")

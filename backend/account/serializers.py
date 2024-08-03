@@ -6,12 +6,14 @@ from django.utils.http import urlsafe_base64_encode
 from django.core.mail import send_mail
 from django.contrib.auth.tokens import default_token_generator
 from django.conf import settings
+from django.contrib.auth import authenticate
+
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id', 'username', 'email', 'role', 'password']
+        fields = ['id', 'username', 'email', 'role', 'password','is_active','is_verify']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
@@ -30,17 +32,49 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 class DoctorProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
     class Meta:
         model = DoctorProfile
         fields = '__all__'
 
 class PatientProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
     class Meta:
         model = PatientProfile
         fields = '__all__'
 
 class TokenSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
+        user = authenticate(username=attrs['username'], password=attrs['password'])
+        
+        if user is None:
+            raise serializers.ValidationError({"detail": "Invalid credentials."})
+        
+        if not user.is_active:
+            raise serializers.ValidationError({"detail": "Account is inactive."})
+        
+        if not user.is_superuser and not user.is_verify:
+            raise serializers.ValidationError({"detail": "Email is not verified. Please check your email."})
+        
         data = super().validate(attrs)
         data.update({'role': self.user.role})
+
+        if self.user.role == 'doctor':
+            try:
+                profile_complete = self.user.doctor_profile.is_complete()
+                
+            except DoctorProfile.DoesNotExist:
+                profile_complete = False
+                
+        elif self.user.role == 'patient':
+            try:
+                profile_complete = self.user.patient_profile.is_complete()
+                
+            except PatientProfile.DoesNotExist:
+                profile_complete = False
+                
+        else:
+            profile_complete = False
+
+        data.update({'profile_complete': profile_complete})
         return data

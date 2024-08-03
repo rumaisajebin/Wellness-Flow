@@ -1,6 +1,10 @@
-from django.urls import path
-from .views import Create_List_profile
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import PatientProfileViewSet
+
+router = DefaultRouter()
+router.register(r'patient-profiles', PatientProfileViewSet, basename='patient-profile')
+
 urlpatterns = [
-    path('patient-profiles/', Create_List_profile.as_view(), name='patient-profile-list-create'),
-    
+    path('', include(router.urls)),
 ]

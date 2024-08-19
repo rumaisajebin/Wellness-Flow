@@ -58,6 +58,7 @@ class TokenSerializer(TokenObtainPairSerializer):
         
         data = super().validate(attrs)
         data.update({'role': self.user.role})
+        data.update({'profile_id': self.user.role})
 
         if self.user.role == 'doctor':
             try:

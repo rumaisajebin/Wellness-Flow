@@ -6,10 +6,11 @@ class UserSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['email','role','username']
         
+
 class PatientSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only =True)
+    user = UserSerializer(read_only=True)
     class Meta:
         model = PatientProfile
-        exclude = ['is_block']
+        exclude = []
         read_only_fields = ['user']
         

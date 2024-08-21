@@ -1,32 +1,25 @@
-# views.py
 from rest_framework import viewsets
-from rest_framework.response import Response
-from rest_framework import status
-from .models import Slot, Booking, TimeSlot
-from .serializers import SlotSerializer, BookingSerializer,TimeSlotSerializer
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
+from .models import DoctorSchedule,Booking
+from .serializers import DoctorScheduleSerializer,BookingSerializer
 
-class Time(viewsets.ModelViewSet):
-    queryset = TimeSlot.objects.all()
-    serializer_class = TimeSlotSerializer
+class DoctorSchedule(viewsets.ModelViewSet):
+    queryset = DoctorSchedule.objects.all()
+    serializer_class = DoctorScheduleSerializer
+    permission_classes = [IsAuthenticated]
 
-class Slot(viewsets.ModelViewSet):
-    queryset = Slot.objects.all()
-    serializer_class = SlotSerializer
-    
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    def perform_create(self, serializer):
+        # Automatically set the doctor as the logged-in user
+        serializer.save(doctor=self.request.user)
 
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response(serializer.data)
-
-class Booking(viewsets.ModelViewSet):
+class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if user.is_doctor:
+            raise PermissionDenied("Only patients can make bookings.")
+        serializer.save()

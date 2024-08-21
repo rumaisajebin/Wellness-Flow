@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from account.models import CustomUser,PatientProfile
+from account.models import CustomUser,PatientProfile,DoctorProfile
+from appoinment.models import DoctorSchedule
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -14,3 +15,18 @@ class PatientSerializer(serializers.ModelSerializer):
         exclude = []
         read_only_fields = ['user']
         
+class DoctorProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DoctorProfile
+        fields = [
+            'id', 'profile_pic', 'full_name', 'phone_number', 'address', 
+            'bio', 'medical_license_no', 'specialization', 'graduation_year', 
+            'years_of_experience', 'workplace_name', 'medical_license_certificate', 
+            'identification_document', 'certificates_degrees', 'curriculum_vitae', 
+            'proof_of_work', 'specialization_certificates', 'is_profile_verify'
+        ]        
+
+class DoctorScheduleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DoctorSchedule
+        fields = ['day', 'start_time', 'end_time', 'max_patients']        

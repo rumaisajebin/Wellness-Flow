@@ -5,7 +5,7 @@ from appoinment.models import DoctorSchedule
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['email','role','username']
+        fields = ['id', 'email','role','username']
         
 
 class PatientSerializer(serializers.ModelSerializer):
@@ -16,10 +16,11 @@ class PatientSerializer(serializers.ModelSerializer):
         read_only_fields = ['user']
         
 class DoctorProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
     class Meta:
         model = DoctorProfile
         fields = [
-            'id', 'profile_pic', 'full_name', 'phone_number', 'address', 
+            'id', 'user', 'profile_pic', 'full_name', 'phone_number', 'address', 
             'bio', 'medical_license_no', 'specialization', 'graduation_year', 
             'years_of_experience', 'workplace_name', 'medical_license_certificate', 
             'identification_document', 'certificates_degrees', 'curriculum_vitae', 
@@ -29,4 +30,4 @@ class DoctorProfileSerializer(serializers.ModelSerializer):
 class DoctorScheduleSerializer(serializers.ModelSerializer):
     class Meta:
         model = DoctorSchedule
-        fields = ['day', 'start_time', 'end_time', 'max_patients']        
+        fields = ['id', 'day', 'start_time', 'end_time', 'max_patients']        

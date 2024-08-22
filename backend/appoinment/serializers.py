@@ -1,5 +1,8 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from .models import DoctorSchedule,Booking
+from .models import DoctorSchedule, Booking
+from rest_framework import serializers
+from .models import DoctorSchedule, Booking, CustomUser
 
 class DoctorScheduleSerializer(serializers.ModelSerializer):
     class Meta:
@@ -8,32 +11,64 @@ class DoctorScheduleSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         doctor = data['doctor']
-
-        # Check if the user is a doctor
         if doctor.role != 'doctor':
             raise serializers.ValidationError("Only doctors can create schedules.")
-
-        # Check if the doctor's profile is verified
         if doctor.doctor_profile.is_profile_verify != 'approved':
             raise serializers.ValidationError("Your profile is not verified. You cannot create a schedule.")
-
         return data
 
+class DoctorProfileSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(source='doctor_profile.full_name')
+
+    class Meta:
+        model = CustomUser
+        fields = ['full_name']
+
+class PatientProfileSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(source='patient_profile.full_name')
+
+    class Meta:
+        model = CustomUser
+        fields = ['full_name']
 
 class BookingSerializer(serializers.ModelSerializer):
+    doctor = DoctorProfileSerializer(read_only=True)
+    patient = PatientProfileSerializer(read_only=True)
+    schedule = DoctorScheduleSerializer(read_only=True)  # Updated to include the schedule details
+
     class Meta:
         model = Booking
-        fields = ['patient', 'doctor', 'schedule', 'slot_time', 'booking_time']
-        read_only_fields = ['patient', 'booking_time']
+        fields = [
+            'id',
+            'patient', 
+            'doctor', 
+            'schedule', 
+            'schedule_date', 
+            'consultation_type', 
+            'booking_time', 
+            'confirmation_required', 
+            'status'
+        ]
+        read_only_fields = ['patient', 'booking_time', 'confirmation_required']
+
 
     def validate(self, data):
         request = self.context['request']
-        if request.user.is_doctor:
-            raise serializers.ValidationError("Only patients can make bookings.")
+        # if request.user.role == 'doctor':
+        #     raise serializers.ValidationError("Only patients can make bookings.")
+        doctor = data.get('doctor')
+        print(doctor)
+        schedule_date = data.get('schedule_date')
+        existing_bookings = Booking.objects.filter(
+            patient__id=request.user.id,
+            doctor=doctor,
+            schedule_date=schedule_date
+        )
+        if existing_bookings.exists():
+            raise serializers.ValidationError("Slot is already booked.")
         return data
 
     def create(self, validated_data):
         user = self.context['request'].user
-        patient_profile = patient_profile.objects.get(user=user)
-        validated_data['patient'] = patient_profile
+        validated_data['patient'] = user
         return super().create(validated_data)

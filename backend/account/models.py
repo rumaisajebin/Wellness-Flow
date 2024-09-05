@@ -43,16 +43,17 @@ class DoctorProfile(models.Model):
 ]
 
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='doctor_profile')
-    profile_pic = models.ImageField(upload_to='profile/',null=True)
     full_name = models.CharField(max_length=100)
-    phone_number = models.IntegerField(null = True)
+    phone_number = models.IntegerField(null=True)
     address = models.TextField(null=True)
     bio = models.TextField(null=True)
     medical_license_no = models.CharField(max_length=100)
     specialization = models.CharField(max_length=100)
-    graduation_year = models.IntegerField(null = True)
-    years_of_experience = models.IntegerField(null = True)
+    graduation_year = models.IntegerField(null=True)
+    years_of_experience = models.IntegerField(null=True)
     workplace_name = models.CharField(max_length=100)
+    fee = models.DecimalField(max_digits=10, decimal_places=2, default=200.00)
+    profile_pic = models.ImageField(upload_to='profile/', null=True)
     medical_license_certificate = models.FileField(upload_to='documents/medical_license_certificates/', null=True)
     identification_document = models.FileField(upload_to='documents/identification_documents/', null=True)
     certificates_degrees = models.FileField(upload_to='documents/certificates_degrees/', null=True)
@@ -108,5 +109,13 @@ class PatientProfile(models.Model):
             ]
         return all(required_fields)
     
+    def __str__(self):
+        return self.user.username
+    
+    
+class AdminProfile(models.Model):
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
+    commission_rate = models.DecimalField(max_digits=5, decimal_places=2, default=3.00)  
+
     def __str__(self):
         return self.user.username

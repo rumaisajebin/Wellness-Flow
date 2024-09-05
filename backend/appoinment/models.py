@@ -1,6 +1,7 @@
 from django.db import models
-from django.core.exceptions import ValidationError
 from account.models import CustomUser
+from datetime import datetime, timedelta
+from django.utils import timezone
 
 class DoctorSchedule(models.Model):
     doctor = models.ForeignKey(CustomUser, on_delete=models.CASCADE, limit_choices_to={'role': 'doctor'})
@@ -44,16 +45,19 @@ class Booking(models.Model):
     confirmation_required = models.BooleanField(default=True)  # Indicates if the booking is pending confirmation
     booking_time = models.DateTimeField(auto_now_add=True)
 
-    # def save(self, *args, **kwargs):
-    #     # Ensure that the user associated with the patient profile is actually a patient
-    #     if self.patient.role != 'patient':
-    #         raise ValidationError("Only patients can make bookings.")
+    def can_cancel(self, user):
+        # Compare only the schedule date with today's date
+        today = timezone.localdate()  # Get the current date
         
-    #     # Ensure that the user associated with the doctor profile is actually a doctor
-    #     if self.doctor.role != 'doctor':
-    #         raise ValidationError("The selected user for doctor is not a doctor.")
+        # Allow doctor to cancel before confirming the booking
+        if user.role == 'doctor' and self.status == 'pending':
+            return True
         
-    #     super().save(*args, **kwargs)
-
+        # Allow patient to cancel if today's date is before the consulting date
+        if user.role == 'patient' and self.status == 'confirmed':
+            return today < self.schedule_date
+        
+        return False
+    
     def __str__(self):
         return f'Booking by {self.patient.username} with {self.doctor.username} on {self.schedule.day}'

@@ -3,8 +3,12 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
-from .serializers import DoctorSerializer, DoctorUpdateSerializer,PatientSerializer
+from .serializers import DoctorSerializer, DoctorUpdateSerializer,PatientSerializer ,Booking ,BookingSerializer ,Agreement,AgreementSerializer
 from account.models import DoctorProfile,PatientProfile
+from io import BytesIO
+from zipfile import ZipFile
+import requests
+from django.http import HttpResponse
 
 class DoctorView(viewsets.ModelViewSet):
     queryset = DoctorProfile.objects.all()
@@ -54,6 +58,32 @@ class DoctorView(viewsets.ModelViewSet):
     def verification_choices(self, request):
         choices = dict(DoctorProfile.VERIFICATION_STATUS_CHOICES)
         return Response(choices, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['get'], url_path='download-certificates')
+    def download_certificates(self, request, pk=None):
+        doctor = get_object_or_404(DoctorProfile, pk=pk)
+        certificates = {
+            'medical_license_certificate': doctor.medical_license_certificate,
+            'identification_document': doctor.identification_document,
+            'certificates_degrees': doctor.certificates_degrees,
+            'curriculum_vitae': doctor.curriculum_vitae,
+            'proof_of_work': doctor.proof_of_work,
+            'specialization_certificates': doctor.specialization_certificates,
+        }
+
+        # Create a ZIP file
+        zip_buffer = BytesIO()
+        with ZipFile(zip_buffer, 'w') as zip_file:
+            for cert_name, cert_url in certificates.items():
+                if cert_url:
+                    response = requests.get(cert_url)
+                    file_name = f"{cert_name}.pdf"  # Adjust file extension as needed
+                    zip_file.writestr(file_name, response.content)
+        
+        zip_buffer.seek(0)
+        response = HttpResponse(zip_buffer, content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename=certificates_{doctor.id}.zip'
+        return response
 
 
 class PatientView(viewsets.ModelViewSet):
@@ -80,3 +110,54 @@ class PatientView(viewsets.ModelViewSet):
 
         patient.user.save()
         return Response({"status": status_message}, status=status.HTTP_200_OK)
+    
+
+class BookingViewSet(viewsets.ModelViewSet):
+    queryset = Booking.objects.all()
+    serializer_class = BookingSerializer
+    permission_classes = [IsAuthenticated]    
+
+
+
+class AgreementViewSet(viewsets.ModelViewSet):
+    queryset = Agreement.objects.all()
+    serializer_class = AgreementSerializer
+
+    def create(self, request, *args, **kwargs):
+        doctor_id = request.data.get('doctor')
+        admin_id = request.data.get('admin')
+
+        # Check if doctor and admin profiles exist
+        if not doctor_id or not admin_id:
+            return Response({'error': 'Doctor and Admin must be provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            agreement = Agreement.objects.create(
+                doctor_id=doctor_id,
+                admin_id=admin_id,
+                start_date=request.data.get('start_date'),
+                status='active'
+            )
+            serializer = self.get_serializer(agreement)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def retrieve(self, request, *args, **kwargs):
+        agreement = self.get_object()
+        serializer = self.get_serializer(agreement)
+        return Response(serializer.data)
+
+    def update(self, request, *args, **kwargs):
+        agreement = self.get_object()
+        privacy_accepted = request.data.get('privacy_accepted')
+        signed = request.data.get('signed')
+
+        if privacy_accepted is not None:
+            agreement.privacy_accepted = privacy_accepted
+        if signed is not None:
+            agreement.signed = signed
+
+        agreement.save()
+        serializer = self.get_serializer(agreement)
+        return Response(serializer.data)

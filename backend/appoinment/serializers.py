@@ -32,16 +32,25 @@ class PatientProfileSerializer(serializers.ModelSerializer):
         fields = ['full_name']
 
 class BookingSerializer(serializers.ModelSerializer):
-    doctor = DoctorProfileSerializer(read_only=True)
-    patient = PatientProfileSerializer(read_only=True)
-    schedule = DoctorScheduleSerializer(read_only=True)  # Updated to include the schedule details
+    doctor_username = serializers.CharField(source='doctor.username', read_only=True)
+    doctor_email = serializers.CharField(source='doctor.email', read_only=True)
+    doctor_specialization = serializers.CharField(source='doctor.doctor_profile.specialization', read_only=True)
+    # patient_username = serializers.CharField(source='patient.username', read_only=True)  
+    
+    doctor = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.filter(role='doctor'))
+    schedule = serializers.PrimaryKeyRelatedField(queryset=DoctorSchedule.objects.all())
+    patient = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     class Meta:
         model = Booking
         fields = [
             'id',
             'patient', 
+            # 'patient_username',
             'doctor', 
+            'doctor_username', 
+            'doctor_email', 
+            'doctor_specialization', 
             'schedule', 
             'schedule_date', 
             'consultation_type', 
@@ -51,24 +60,23 @@ class BookingSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['patient', 'booking_time', 'confirmation_required']
 
-
     def validate(self, data):
         request = self.context['request']
-        # if request.user.role == 'doctor':
-        #     raise serializers.ValidationError("Only patients can make bookings.")
         doctor = data.get('doctor')
-        print(doctor)
+        schedule = data.get('schedule')
         schedule_date = data.get('schedule_date')
-        existing_bookings = Booking.objects.filter(
-            patient__id=request.user.id,
-            doctor=doctor,
-            schedule_date=schedule_date
-        )
-        if existing_bookings.exists():
-            raise serializers.ValidationError("Slot is already booked.")
+        
+        if schedule:
+            if Booking.objects.filter(
+                patient=request.user, doctor=doctor, schedule_date=schedule_date
+            ).exclude(status='canceled').exists():
+                raise serializers.ValidationError("You have already booked this slot.")
+            
+            if not DoctorSchedule.objects.filter(id=schedule.id, day=schedule.day).exists():
+                raise serializers.ValidationError("This slot is unavailable for booking.")
+        
         return data
 
     def create(self, validated_data):
-        user = self.context['request'].user
-        validated_data['patient'] = user
+        validated_data['patient'] = self.context['request'].user
         return super().create(validated_data)

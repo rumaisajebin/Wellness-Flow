@@ -40,3 +40,4 @@ class DoctorProfileViewSet(viewsets.ModelViewSet):
         user = request.user
         profile = get_object_or_404(DoctorProfile, user=user)
         return Response({"profile_id": profile.id})
+

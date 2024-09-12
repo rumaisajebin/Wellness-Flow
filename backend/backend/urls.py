@@ -15,6 +15,7 @@ urlpatterns = [
     path('patient/', include('patient.urls')), 
     path('doctor/', include('doctor.urls')),
     path('appoinment/', include('appoinment.urls')),
+    path('payment/', include('payment.urls')),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]

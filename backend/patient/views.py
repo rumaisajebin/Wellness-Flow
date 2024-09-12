@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
-from .serializers import  PatientSerializer,PatientProfile,DoctorProfile,DoctorProfileSerializer,DoctorScheduleSerializer,DoctorSchedule
+from .serializers import  PatientSerializer,PatientProfile,DoctorProfile,DoctorProfileSerializer,DoctorScheduleSerializer,DoctorSchedule ,TransactionSerializer, Transaction
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.exceptions import ValidationError
 
@@ -57,3 +57,17 @@ class DoctorProfileViewSet(viewsets.ModelViewSet):
         schedules = DoctorSchedule.objects.filter(doctor=doctor)
         serializer = DoctorScheduleSerializer(schedules, many=True)
         return Response(serializer.data)
+    
+
+
+class TransactionViewSet(viewsets.ModelViewSet):
+    serializer_class = TransactionSerializer
+    permission_classes = [IsAuthenticated]  # Ensure only authenticated users can access
+
+    def get_queryset(self):
+        # Ensure that only the transactions belonging to the logged-in patient are shown
+        return Transaction.objects.filter(patient=self.request.user)
+
+    def perform_create(self, serializer):
+        # Ensure the patient is the logged-in user when creating a transaction
+        serializer.save(patient=self.request.user)

@@ -44,6 +44,7 @@ class Booking(models.Model):
     consultation_type = models.CharField(max_length=30, choices=CONSULTATION_TYPE_CHOICES, default='new_consultation')
     confirmation_required = models.BooleanField(default=True)  # Indicates if the booking is pending confirmation
     booking_time = models.DateTimeField(auto_now_add=True)
+    paid = models.BooleanField(default=False)
 
     def can_cancel(self, user):
         # Compare only the schedule date with today's date

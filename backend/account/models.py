@@ -12,6 +12,7 @@ class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=7,choices=ROLE_CHOICES )
     is_verify = models.BooleanField(default=False)
+    wallet_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     
     REQUIRED_FIELDS = ['email']
     
@@ -62,6 +63,7 @@ class DoctorProfile(models.Model):
     specialization_certificates = models.FileField(upload_to='documents/specialization_certificates/', null=True)
     rejection_reason = models.TextField(null=True, blank=True)
     is_profile_verify = models.CharField(max_length=50, choices=VERIFICATION_STATUS_CHOICES, default='pending')
+    
 
     def is_complete(self):
         required_fields = [

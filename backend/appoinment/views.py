@@ -65,6 +65,10 @@ class BookingViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
+        
+        if not request.data.get('paid', False):
+            return Response({'detail': 'Booking cannot be created unless it is paid.'}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             self.perform_create(serializer)
             headers = self.get_success_headers(serializer.data)
@@ -90,6 +94,9 @@ class BookingViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated])
     def confirm(self, request, pk=None):
         booking = self.get_object()
+        if not booking.paid:
+            return Response({'detail': 'Booking cannot be confirmed until it is paid.'}, status=status.HTTP_400_BAD_REQUEST)
+        
         serializer = self.get_serializer(booking, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save(status='confirmed')  # Update the status or any other field
@@ -164,7 +171,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             time_of_end = datetime.combine(today,       end_time)
             new_start_time = time_of_start - start_of_day
             new_end_time = time_of_end - start_of_day
-            print(type(new_start_time))
+            
                     
             num_bookings = bookings.count()
             if num_bookings == 0:
@@ -188,3 +195,6 @@ class BookingViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Doctor schedule not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+        

@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'patient',
     'admin_side',
     'appoinment',
+    'payment',
 ]
 
 MIDDLEWARE = [
@@ -198,3 +199,6 @@ EMAIL_HOST_USER = 'jebinrumaisa@gmail.com'
 EMAIL_HOST_PASSWORD = 'csqo yior dtey iffx'
 
 BASE_URL = "http://127.0.0.1:8000/"
+
+STRIPE_SECRET_KEY = 'sk_test_51PvfpaGFFuSDNKGDIFQa5BdtPpclKoPb8B0tBlF3vVjPH0M7pQNP1p5B4E4Jrkoj3H5IN7XRdR087ArD3KphZWWU004drktUoF'
+STRIPE_PUBLISHABLE_KEY = 'pk_test_51PvfpaGFFuSDNKGDBkvHUBNNM8KISveSjN0cjPBFYX7OqoxJWqnw3bORe91cYA6qPF67whAs8lZVZsVHB0DuurAU00VkoKG4zC'

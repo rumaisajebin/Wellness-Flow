@@ -56,7 +56,8 @@ class BookingSerializer(serializers.ModelSerializer):
             'consultation_type', 
             'booking_time', 
             'confirmation_required', 
-            'status'
+            'status',
+            'paid'
         ]
         read_only_fields = ['patient', 'booking_time', 'confirmation_required']
 
@@ -74,6 +75,9 @@ class BookingSerializer(serializers.ModelSerializer):
             
             if not DoctorSchedule.objects.filter(id=schedule.id, day=schedule.day).exists():
                 raise serializers.ValidationError("This slot is unavailable for booking.")
+            
+            if data.get('status') == 'confirmed' and not data.get('paid', False):
+                raise serializers.ValidationError("Booking cannot be confirmed until it is paid.")
         
         return data
 

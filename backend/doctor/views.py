@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
-from .serializers import DoctorSerializer,DoctorProfile
+from .serializers import DoctorSerializer,DoctorProfile,TransactionSerializer,Transaction
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.exceptions import ValidationError
 
@@ -41,3 +41,17 @@ class DoctorProfileViewSet(viewsets.ModelViewSet):
         profile = get_object_or_404(DoctorProfile, user=user)
         return Response({"profile_id": profile.id})
 
+
+class TransactionViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Transaction.objects.all()
+    serializer_class = TransactionSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'doctor':
+            # Return transactions where the user is the doctor
+            return Transaction.objects.filter(doctor=user)
+        elif user.role == 'patient':
+            # Return transactions where the user is the patient
+            return Transaction.objects.filter(patient=user)
+        return Transaction.objects.none()

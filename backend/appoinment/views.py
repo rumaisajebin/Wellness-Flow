@@ -1,3 +1,5 @@
+import stripe
+from django.conf import settings
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework import status
@@ -8,7 +10,10 @@ from rest_framework.permissions import IsAuthenticated
 from django.core.exceptions import ValidationError
 from django.db.models import Case, When
 from datetime import datetime, time, timedelta
+from django.db import transaction as db_transaction
+from decimal import Decimal
 
+stripe.api_key = settings.STRIPE_SECRET_KEY
 class DoctorScheduleViewSet(viewsets.ModelViewSet):
     queryset = DoctorSchedule.objects.all()
     serializer_class = DoctorScheduleSerializer
@@ -26,7 +31,7 @@ class DoctorScheduleViewSet(viewsets.ModelViewSet):
             'Sunday': 7,
         }
 
-        # Annotate each object with its custom order and sort by that annotation
+        
         return DoctorSchedule.objects.filter(doctor=user).annotate(
             day_order=Case(
                 *[When(day=day, then=order) for day, order in day_order.items()],
@@ -99,7 +104,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         
         serializer = self.get_serializer(booking, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save(status='confirmed')  # Update the status or any other field
+            serializer.save(status='confirmed')  
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             print(serializer.errors)
@@ -110,7 +115,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         booking = self.get_object()
         new_status = request.data.get('status')
         
-        # Check if the status is 'canceled' and if the booking can be canceled
+        
         if new_status == 'canceled' and not booking.can_cancel(request.user):
             return Response({'detail': 'You cannot cancel this booking.'}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -160,8 +165,8 @@ class BookingViewSet(viewsets.ModelViewSet):
             slot = DoctorSchedule.objects.get(doctor_id=doctor_id, day=day_of_week)
             bookings = Booking.objects.filter(doctor_id=doctor_id, schedule_date=date_str)
             
-            # start_time = datetime.strptime(slot.start_time, "%H:%M:%S")
-            # end_time = datetime.strptime(slot.end_time, "%H:%M:%S")
+            
+            
             start_time = slot.start_time
             end_time = slot.end_time
                     
@@ -197,4 +202,53 @@ class BookingViewSet(viewsets.ModelViewSet):
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
         
+# Cancel Booking With Refund Option
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def cancel_booking(self, request, pk=None):
+        booking = self.get_object()
+        user = request.user
+        print(booking,user)
         
+        if user != booking.patient:
+            return Response({'detail': 'You are not authorized to cancel this booking.'}, status=status.HTTP_403_FORBIDDEN)
+
+        
+        if not booking.can_cancel(user):
+            return Response({'detail': 'Booking cannot be canceled.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        
+        if not hasattr(booking, 'transaction'):
+            return Response({'detail': 'No payment found for this booking.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        transaction = booking.transaction
+
+        
+        if transaction.refund_status == 'refunded':
+            return Response({'detail': 'This booking has already been refunded.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        
+        if booking.paid and transaction.status == 'success':
+            
+            patient_wallet_balance = booking.patient.wallet_balance
+            doctor_wallet_balance = booking.doctor.wallet_balance
+            refund_amount = transaction.amount  
+            
+            with db_transaction.atomic():
+                
+                user.wallet_balance = patient_wallet_balance + Decimal(refund_amount)
+                user.save()
+                
+                if doctor_wallet_balance >= Decimal(refund_amount):  
+                    booking.doctor.wallet_balance = doctor_wallet_balance - Decimal(refund_amount)
+                    booking.doctor.save()
+                else:
+                    return Response({'detail': 'Doctor has insufficient funds to process the refund.'}, status=status.HTTP_400_BAD_REQUEST)
+ 
+                transaction.refund_status = 'refunded'
+                transaction.refund_amount = refund_amount
+                transaction.save()
+        
+        booking.status = 'canceled'
+        booking.save()
+
+        return Response({'detail': 'Booking canceled and amount refunded successfully.'}, status=status.HTTP_200_OK)

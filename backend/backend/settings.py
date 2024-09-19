@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 from pathlib import Path
 from datetime import timedelta
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -192,21 +193,25 @@ SIMPLE_JWT = {
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_USE_TLS = True
-EMAIL_PORT = 587
-EMAIL_HOST_USER = 'jebinrumaisa@gmail.com'
-EMAIL_HOST_PASSWORD = 'csqo yior dtey iffx'
-
 BASE_URL = "http://127.0.0.1:8000/"
 
-STRIPE_SECRET_KEY = 'sk_test_51PvfpaGFFuSDNKGDIFQa5BdtPpclKoPb8B0tBlF3vVjPH0M7pQNP1p5B4E4Jrkoj3H5IN7XRdR087ArD3KphZWWU004drktUoF'
-STRIPE_PUBLISHABLE_KEY = 'pk_test_51PvfpaGFFuSDNKGDBkvHUBNNM8KISveSjN0cjPBFYX7OqoxJWqnw3bORe91cYA6qPF67whAs8lZVZsVHB0DuurAU00VkoKG4zC'
+load_dotenv()
 
+# Email settings
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND')
+EMAIL_HOST = os.getenv('EMAIL_HOST')
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS') == 'True'
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))  # Provide a default value
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
-TWILIO_ACCOUNT_SID = 'ACf16b0386e65e9ce4d7fc80a8442b428a'
-TWILIO_API_KEY = 'SK76571a22230ebda97df0c8994c3cf41b'
-TWILIO_API_SECRET = 'ybhwjVcwOitha5mqIBTGQ2lVzoiXqBrK'
-TWILIO_PHONE_NUMBER = '+91 77366 83014'
-TWILIO_AUTH_TOKEN = 'f0eac8b569e9c56328bd204d01cf3f08'
+# Stripe settings
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
+
+# Twilio settings
+TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
+TWILIO_API_KEY = os.getenv('TWILIO_API_KEY')
+TWILIO_API_SECRET = os.getenv('TWILIO_API_SECRET')
+TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER')
+TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')

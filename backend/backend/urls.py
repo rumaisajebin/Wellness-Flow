@@ -16,6 +16,7 @@ urlpatterns = [
     path('doctor/', include('doctor.urls')),
     path('appoinment/', include('appoinment.urls')),
     path('payment/', include('payment.urls')),
+    path('videochat/', include('videochat.urls')),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]

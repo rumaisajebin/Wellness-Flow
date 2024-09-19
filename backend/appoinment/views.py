@@ -12,6 +12,7 @@ from django.db.models import Case, When
 from datetime import datetime, time, timedelta
 from django.db import transaction as db_transaction
 from decimal import Decimal
+from django.utils import timezone
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 class DoctorScheduleViewSet(viewsets.ModelViewSet):
@@ -150,6 +151,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         user_booked_slots = Booking.objects.filter(patient_id=patient_id).values_list('schedule_id', flat=True)
         return Response(list(user_booked_slots), status=status.HTTP_200_OK)
 
+    
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def expected_consulting_time(self, request):
         doctor_id = request.query_params.get('doctor')
@@ -164,21 +166,22 @@ class BookingViewSet(viewsets.ModelViewSet):
 
             slot = DoctorSchedule.objects.get(doctor_id=doctor_id, day=day_of_week)
             bookings = Booking.objects.filter(doctor_id=doctor_id, schedule_date=date_str)
-            
-            
-            
+
             start_time = slot.start_time
             end_time = slot.end_time
-                    
+            
             today = datetime.today()
-            start_of_day = datetime.combine(today, time(0, 0))
-            time_of_start = datetime.combine(today, start_time)
-            time_of_end = datetime.combine(today,       end_time)
+            start_of_day = datetime.combine(date, time(0, 0))
+            time_of_start = datetime.combine(date, start_time)
+            time_of_end = datetime.combine(date, end_time)
+            
+            # Calculate the new start time and end time
             new_start_time = time_of_start - start_of_day
             new_end_time = time_of_end - start_of_day
             
-                    
+            # Determine the number of existing bookings
             num_bookings = bookings.count()
+            
             if num_bookings == 0:
                 expected_time = new_start_time
             else:
@@ -186,9 +189,20 @@ class BookingViewSet(viewsets.ModelViewSet):
                 new_time = timedelta(minutes=new_time)
                 expected_time = new_start_time + new_time
             
+            # Ensure the expected time is in the future
+            if expected_time < timedelta():
+                expected_time = timedelta()  # Ensure the time is at least the start of the day
+            
+            # Check if the expected time is past the end of the schedule
             if expected_time > new_end_time:
                 return Response({'error': 'No available slots for the selected date'}, status=status.HTTP_400_BAD_REQUEST)
             
+            # If the booking date is today, ensure the time is in the future
+            if date.date() == today.date():
+                current_time = timedelta(hours=today.hour, minutes=today.minute)
+                if expected_time < current_time:
+                    expected_time = current_time
+
             total_seconds = int(expected_time.total_seconds())
             hours, remainder = divmod(total_seconds, 3600)
             minutes, seconds = divmod(remainder, 60)
@@ -196,6 +210,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             
             formatted_expected_time = expected_time.strftime("%H:%M")
             return Response({'expected_time': formatted_expected_time})
+        
         except DoctorSchedule.DoesNotExist:
             return Response({'error': 'Doctor schedule not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
@@ -252,3 +267,47 @@ class BookingViewSet(viewsets.ModelViewSet):
         booking.save()
 
         return Response({'detail': 'Booking canceled and amount refunded successfully.'}, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def todays_confirmed_paid_bookings(self, request):
+        today = timezone.localdate()
+        start_of_day = timezone.make_aware(datetime.combine(today, time.min))
+        end_of_day = timezone.make_aware(datetime.combine(today, time.max))
+        
+        bookings = Booking.objects.filter(
+            doctor=request.user, 
+            status='confirmed', 
+            paid=True, 
+            schedule_date=today
+        ).order_by('booking_time')
+        
+        serializer = self.get_serializer(bookings, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def schedule_details(self, request):
+        booking_id = request.query_params.get('booking_id')
+        
+        if not booking_id:
+            return Response({'detail': 'Booking ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            booking = Booking.objects.get(id=booking_id)
+            schedule = booking.schedule  # Fetch the related schedule
+
+            schedule_data = {
+                'doctor': booking.doctor.username,  # Fetch the doctor's username
+                'day': schedule.day,  # Day of the week
+                'start_time': schedule.start_time.strftime("%H:%M"),  # Format the start time
+                'end_time': schedule.end_time.strftime("%H:%M"),  # Format the end time
+                'max_patients': schedule.max_patients,  # Maximum number of patients
+                'status': booking.status,  # Booking status
+                'consultation_type': booking.consultation_type  # Type of consultation
+            }
+
+            return Response(schedule_data, status=status.HTTP_200_OK)
+        
+        except Booking.DoesNotExist:
+            return Response({'detail': 'Booking not found.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)

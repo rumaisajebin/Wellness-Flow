@@ -5,8 +5,8 @@ from rest_framework import generics,status
 from rest_framework.permissions import AllowAny,IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView
 from account.models import CustomUser
-from account.serializers import UserSerializer, TokenSerializer, DoctorProfileSerializer, PatientProfileSerializer
-
+from account.serializers import UserSerializer, TokenSerializer, DoctorProfileSerializer, PatientProfileSerializer, NotificationSerializer, Notification
+from rest_framework import viewsets
 from django.contrib.auth import get_user_model
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
@@ -62,3 +62,13 @@ def verify_account(request, uidb64, token):
         # return HttpResponse("Your account has been successfully verified.")
     else:
         return HttpResponse("Invalid verification link.")
+    
+    
+    
+class NotificationViewSet(viewsets.ModelViewSet):
+    queryset = Notification.objects.all()
+    serializer_class = NotificationSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        return self.queryset.filter(user=user)

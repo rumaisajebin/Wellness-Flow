@@ -13,6 +13,7 @@ from datetime import datetime, time, timedelta
 from django.db import transaction as db_transaction
 from decimal import Decimal
 from django.utils import timezone
+from account.models import Notification
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 class DoctorScheduleViewSet(viewsets.ModelViewSet):
@@ -97,19 +98,27 @@ class BookingViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(bookings, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
     @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated])
     def confirm(self, request, pk=None):
         booking = self.get_object()
+        
         if not booking.paid:
             return Response({'detail': 'Booking cannot be confirmed until it is paid.'}, status=status.HTTP_400_BAD_REQUEST)
         
         serializer = self.get_serializer(booking, data=request.data, partial=True)
+        
         if serializer.is_valid():
             serializer.save(status='confirmed')  
+            Notification.objects.create(
+                user=request.user,
+                message="Your booking has been confirmed!"
+            )
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             print(serializer.errors)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
     @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated])
     def update_status(self, request, pk=None):

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from account.models import CustomUser,DoctorProfile,PatientProfile
+from account.models import CustomUser,DoctorProfile,PatientProfile, Notification
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
@@ -79,3 +79,11 @@ class TokenSerializer(TokenObtainPairSerializer):
 
         data.update({'profile_complete': profile_complete})
         return data
+    
+    
+    
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ['id', 'user', 'message', 'is_read', 'created_at']

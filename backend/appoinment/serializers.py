@@ -3,7 +3,6 @@ from rest_framework import serializers
 from .models import DoctorSchedule, Booking
 from rest_framework import serializers
 from .models import DoctorSchedule, Booking, CustomUser
-
 class DoctorScheduleSerializer(serializers.ModelSerializer):
     class Meta:
         model = DoctorSchedule
@@ -15,6 +14,22 @@ class DoctorScheduleSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Only doctors can create schedules.")
         if doctor.doctor_profile.is_profile_verify != 'approved':
             raise serializers.ValidationError("Your profile is not verified. You cannot create a schedule.")
+
+        day = data.get('day')
+        start_time = data.get('start_time')
+        end_time = data.get('end_time')
+
+        # Check for overlapping schedules
+        overlapping_schedules = DoctorSchedule.objects.filter(
+            doctor=doctor,
+            day=day,
+            start_time__lt=end_time,
+            end_time__gt=start_time
+        )
+
+        if overlapping_schedules.exists():
+            raise serializers.ValidationError("This schedule overlaps with an existing schedule.")
+
         return data
 
 class DoctorProfileSerializer(serializers.ModelSerializer):
@@ -35,8 +50,14 @@ class BookingSerializer(serializers.ModelSerializer):
     doctor_username = serializers.CharField(source='doctor.username', read_only=True)
     doctor_email = serializers.CharField(source='doctor.email', read_only=True)
     doctor_specialization = serializers.CharField(source='doctor.doctor_profile.specialization', read_only=True)
-    # patient_username = serializers.CharField(source='patient.username', read_only=True)  
     
+    patient_username = serializers.CharField(source='patient.username', read_only=True)  # Fetch patient's username
+    patient_email = serializers.EmailField(source='patient.email', read_only=True)  # Fetch patient's email
+    patient_full_name = serializers.CharField(source='patient.patient_profile.full_name', read_only=True)  # Fetch patient's full name
+    
+    # Add this field to expose the patient ID
+    patient_id = serializers.IntegerField(source='patient.id', read_only=True)
+
     doctor = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.filter(role='doctor'))
     schedule = serializers.PrimaryKeyRelatedField(queryset=DoctorSchedule.objects.all())
     patient = serializers.HiddenField(default=serializers.CurrentUserDefault())
@@ -45,8 +66,11 @@ class BookingSerializer(serializers.ModelSerializer):
         model = Booking
         fields = [
             'id',
+            'patient_id',  # Include patient ID here
             'patient', 
-            # 'patient_username',
+            'patient_username', 
+            'patient_email',
+            'patient_full_name',
             'doctor', 
             'doctor_username', 
             'doctor_email', 

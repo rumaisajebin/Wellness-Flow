@@ -60,9 +60,19 @@ class DoctorScheduleViewSet(viewsets.ModelViewSet):
         schedule = DoctorSchedule.objects.filter(doctor_id=doctor_id, day=day)
         if not schedule.exists():
             return Response({"detail": "No schedule found for this day."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Format the available slots to 12-hour format
+        formatted_slots = []
+        for slot in schedule:
+            formatted_time = slot.time.strftime("%I:%M %p")  # 12-hour format
+            formatted_slots.append({
+                'id': slot.id,
+                'day': slot.day,
+                'time': formatted_time,
+                # Add other relevant fields if needed
+            })
         
-        serializer = self.get_serializer(schedule, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(formatted_slots, status=status.HTTP_200_OK)
     
 class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.all()
@@ -194,7 +204,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             if num_bookings == 0:
                 expected_time = new_start_time
             else:
-                new_time = 5 * num_bookings
+                new_time = 15 * num_bookings
                 new_time = timedelta(minutes=new_time)
                 expected_time = new_start_time + new_time
             
@@ -258,6 +268,8 @@ class BookingViewSet(viewsets.ModelViewSet):
             refund_amount = transaction.amount  
             
             with db_transaction.atomic():
+                booking.cancel_reason = request.data.get('reason', '')  
+                booking.status = 'canceled'
                 
                 user.wallet_balance = patient_wallet_balance + Decimal(refund_amount)
                 user.save()
@@ -272,7 +284,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 transaction.refund_amount = refund_amount
                 transaction.save()
         
-        booking.status = 'canceled'
+        print(transaction.refund_status)
         booking.save()
 
         return Response({'detail': 'Booking canceled and amount refunded successfully.'}, status=status.HTTP_200_OK)

@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'appoinment',
     'payment',
     'videochat',
+    'chat',
 ]
 
 MIDDLEWARE = [
@@ -89,7 +90,7 @@ ROOT_URLCONF = 'backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')], 
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -114,6 +115,16 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
+}
+
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',  # Correct backend path for channels_redis
+        'CONFIG': {
+            'hosts': [('localhost', 6379)],  # Redis host and port
+        },
+    },
 }
 
 
@@ -211,9 +222,3 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
 STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
 
-# Twilio settings
-TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
-TWILIO_API_KEY = os.getenv('TWILIO_API_KEY')
-TWILIO_API_SECRET = os.getenv('TWILIO_API_SECRET')
-TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER')
-TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')

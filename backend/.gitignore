@@ -1,1 +1,29 @@
+# Ignore environment variable file
 .env
+
+# Ignore Django migrations (if they are inside each app directory)
+**/migrations/*
+**/migrations/**
+
+# Ignore Django SQLite database (if you use SQLite)
+db.sqlite3
+
+# Ignore Python compiled files
+*.pyc
+__pycache__/
+
+# Ignore virtual environment (if applicable)
+venv/
+.env/
+
+# Ignore log files
+*.log
+
+# Ignore cache files
+*.cache
+
+# Ignore node_modules (if applicable, for frontend projects)
+node_modules/
+
+# Ignore local VSCode settings (optional, if using VSCode)
+.vscode/

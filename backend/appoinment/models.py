@@ -45,6 +45,7 @@ class Booking(models.Model):
     confirmation_required = models.BooleanField(default=True)  # Indicates if the booking is pending confirmation
     booking_time = models.DateTimeField(auto_now_add=True)
     paid = models.BooleanField(default=False)
+    cancel_reason = models.TextField(blank=True, null=True)
 
     def can_cancel(self, user):
         # Compare only the schedule date with today's date

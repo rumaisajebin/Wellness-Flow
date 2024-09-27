@@ -57,6 +57,7 @@ class BookingSerializer(serializers.ModelSerializer):
     
     # Add this field to expose the patient ID
     patient_id = serializers.IntegerField(source='patient.id', read_only=True)
+    doctor_id = serializers.IntegerField(source='doctor.id', read_only=True)
 
     doctor = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.filter(role='doctor'))
     schedule = serializers.PrimaryKeyRelatedField(queryset=DoctorSchedule.objects.all())
@@ -66,7 +67,8 @@ class BookingSerializer(serializers.ModelSerializer):
         model = Booking
         fields = [
             'id',
-            'patient_id',  # Include patient ID here
+            'patient_id', 
+            'doctor_id',
             'patient', 
             'patient_username', 
             'patient_email',

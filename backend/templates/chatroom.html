@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Room</title>
+</head>
+<body>
+    <h1>Room: {{ room_name }}</h1>
+    <h2>Room Group: {{ room_group_name }}</h2>
+    <h3>User: {{ username }}</h3>
+    <h4>Doctor ID: {{ doctor_id|default:"None" }}</h4>
+    <h4>Patient ID: {{ patient_id|default:"None" }}</h4>
+
+    <!-- Chat messages display -->
+    <div id="chat-log"></div>
+
+    <!-- Input box for sending messages -->
+    <input
+        id="chat-message-input"
+        type="text"
+        placeholder="Type a message..."
+        autocomplete="off"
+    />
+    <button id="chat-message-submit">Send</button>
+
+    <script>
+        const roomName = "{{ room_name }}"; // Set dynamically via Django template
+        const username = "rinu1"; // Dynamically set username
+        const doctorId = "rinu"; // Dynamically set doctor ID
+        const patientId = "rinu1"; // Dynamically set patient ID
+
+        console.log(`Connecting to WebSocket: ws://${window.location.host}/ws/chat/${roomName}/`);
+
+        // Initialize WebSocket
+        const chatSocket = new WebSocket(`ws://${window.location.host}/ws/chat/${roomName}/`);
+
+        // Debugging: Log WebSocket object
+        console.log("WebSocket object created:", chatSocket);
+
+        // Handle WebSocket open event
+        chatSocket.onopen = function (e) {
+            console.log("WebSocket connection established!");
+        };
+
+        // Handle incoming messages
+        chatSocket.onmessage = function (e) {
+            const data = JSON.parse(e.data);
+            document.querySelector("#chat-log").innerHTML += "<p><b>" + data.sender + ":</b> " + data.message + "</p>";
+            console.log("Message received:", data.message);
+        };
+
+        // Handle WebSocket error event
+        chatSocket.onerror = function (e) {
+            console.error("WebSocket error observed:", e);
+        };
+
+        // Handle WebSocket close event
+        chatSocket.onclose = function (e) {
+            console.error("Chat socket closed unexpectedly:", e);
+        };
+
+        // Define the sendMessage function
+        const sendMessage = (message, sender, receiver) => {
+            const data = {
+                message: message,
+                sender: sender,
+                receiver: receiver // Include the receiver's username as well
+            };
+
+            chatSocket.send(JSON.stringify(data));
+        };
+
+        // Send a message when the user clicks the send button
+        document.querySelector("#chat-message-submit").onclick = function (e) {
+            const messageInput = document.querySelector("#chat-message-input");
+            const message = messageInput.value;
+
+            if (message.trim() === "") {
+                console.warn("Message is empty, not sending.");
+                return; // Prevent sending empty messages
+            }
+
+            // Specify the receiver's username. You might want to adjust this logic based on your application.
+            const receiver = "other_username"; // Replace this with actual logic to get the receiver
+
+            // Call the sendMessage function
+            sendMessage(message, username, receiver); // Send the message
+
+            console.log("Message sent:", message);
+            messageInput.value = ""; // Clear input field
+        };
+    </script>
+
+</body>
+</html>

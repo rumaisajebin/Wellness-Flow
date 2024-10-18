@@ -27,3 +27,4 @@ node_modules/
 
 # Ignore local VSCode settings (optional, if using VSCode)
 .vscode/
+.ca.pem

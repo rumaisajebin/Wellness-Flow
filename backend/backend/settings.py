@@ -127,12 +127,6 @@ DATABASES = {
         'PASSWORD': os.getenv('DB_PASSWORD'),
         'HOST': os.getenv('DB_HOST'),
         'PORT': os.getenv('DB_PORT'),
-        # Uncomment and modify this section if you need SSL settings for your database
-        # 'OPTIONS': {
-        #     'ssl': {
-        #         'ca': 'backend/ca.pem'  # Path to your CA certificate if necessary
-        #     }
-        # }
     }
 }
 

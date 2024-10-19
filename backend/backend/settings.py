@@ -121,15 +121,14 @@ ASGI_APPLICATION = 'backend.asgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'defaultdb',
+        'USER': 'avnadmin',
+        'PASSWORD': 'AVNS_OcnYfBzh_iMIaQvHdCa',
+        'HOST': 'pg-aec2b28-wellnessflow-b2fc.i.aivencloud.com',
+        'PORT': '10552',
     }
 }
-
 
 CHANNEL_LAYERS = {
     'default': {

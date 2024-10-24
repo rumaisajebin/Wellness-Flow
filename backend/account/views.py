@@ -58,7 +58,7 @@ def verify_account(request, uidb64, token):
     if user is not None and default_token_generator.check_token(user, token):
         user.is_verify = True
         user.save()
-        return redirect("http://localhost:5173/signin")
+        return redirect("https://wellness-flow-frontend.onrender.com/signin")
         # return HttpResponse("Your account has been successfully verified.")
     else:
         return HttpResponse("Invalid verification link.")

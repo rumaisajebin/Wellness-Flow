@@ -25,7 +25,7 @@ class UserSerializer(serializers.ModelSerializer):
         token_generator = default_token_generator
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = token_generator.make_token(user)
-        verification_url = f"{settings.BASE_URL}account/verify_account/{uid}/{token}"
+        verification_url = f"https://rareblu.shop//account/verify_account/{uid}/{token}"
         subject = "Verify your email"
         message = f"Please verify your email by clicking this link: {verification_url}"
         recipient_list = [user.email]

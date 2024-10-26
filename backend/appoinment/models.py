@@ -16,7 +16,7 @@ class DoctorSchedule(models.Model):
     ])
     start_time = models.TimeField()
     end_time = models.TimeField()
-    max_patients = models.IntegerField(default=10)
+    max_patients = models.IntegerField(default=12)
 
     def __str__(self):
         return f'{self.doctor.username} - {self.day} ({self.start_time} - {self.end_time})'

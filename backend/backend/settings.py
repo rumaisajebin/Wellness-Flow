@@ -123,7 +123,7 @@ ASGI_APPLICATION = 'backend.asgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'defaultdb',
+        'NAME': 'project1',
         'USER': 'avnadmin',
         'PASSWORD': 'AVNS_OcnYfBzh_iMIaQvHdCa',
         'HOST': 'pg-aec2b28-wellnessflow-b2fc.i.aivencloud.com',

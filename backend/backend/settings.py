@@ -111,25 +111,25 @@ ASGI_APPLICATION = 'backend.asgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
-
-
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'defaultdb',
-#         'USER': 'avnadmin',
-#         'PASSWORD': 'AVNS_OcnYfBzh_iMIaQvHdCa',
-#         'HOST': 'pg-aec2b28-wellnessflow-b2fc.i.aivencloud.com',
-#         'PORT': '10552',
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
+
+
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'defaultdb',
+        'USER': 'avnadmin',
+        'PASSWORD': 'AVNS_OcnYfBzh_iMIaQvHdCa',
+        'HOST': 'pg-aec2b28-wellnessflow-b2fc.i.aivencloud.com',
+        'PORT': '10552',
+    }
+}
 
 CHANNEL_LAYERS = {
     'default': {

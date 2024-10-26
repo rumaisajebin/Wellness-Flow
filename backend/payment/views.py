@@ -30,7 +30,7 @@ class PaymentView(viewsets.ViewSet):
         try:
             if payment_method == 'stripe':
                 # Create Stripe Checkout Session
-                frontend_base_url = "http://localhost:5173"
+                frontend_base_url = "https://wellness-flow-frontend.onrender.com"
                 session = stripe.checkout.Session.create(
                     payment_method_types=['card'],
                     line_items=[{
@@ -44,8 +44,8 @@ class PaymentView(viewsets.ViewSet):
                         'quantity': 1,
                     }],
                     mode='payment',
-                    success_url=f'http://localhost:5173/patient/payment-success?session_id={{CHECKOUT_SESSION_ID}}&booking_id={booking.id}',
-                    cancel_url='http://localhost:5173/patient/payment-cancel',
+                    success_url=f'https://wellness-flow-frontend.onrender.com/patient/payment-success?session_id={{CHECKOUT_SESSION_ID}}&booking_id={booking.id}',
+                    cancel_url='https://wellness-flow-frontend.onrender.com/patient/payment-cancel',
                     metadata={
                         'booking_id': booking.id,
                     }

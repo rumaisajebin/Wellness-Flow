@@ -171,14 +171,14 @@ USE_I18N = True
 
 USE_TZ = True
 
-# BASE_URL = "https://rareblu.shop/"
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-# MEDIA_URL = BASE_URL + 'media/'
+BASE_URL = "https://rareblu.shop/"
+MEDIA_URL = BASE_URL + 'media/'
+# MEDIA_URL = '/media/'
 
-MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 

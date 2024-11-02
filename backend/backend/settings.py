@@ -68,13 +68,13 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
+    "http://localhost:5173",
     "http://127.0.0.1:3000",
     'https://wellness-flow-frontend.onrender.com',
     # Add other origins as needed
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOW_ALL_ORIGINS = True
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -171,12 +171,14 @@ USE_I18N = True
 
 USE_TZ = True
 
-BASE_URL = "https://rareblu.shop/"
+# BASE_URL = "https://rareblu.shop/"
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-MEDIA_URL = BASE_URL + 'media/'
+# MEDIA_URL = BASE_URL + 'media/'
+
+MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 
